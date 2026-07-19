@@ -19,5 +19,5 @@ Turn an ESP32 into a wireless plug and play keyboard & mouse
 2. **Upload:**
     - Connect the board, select the correct COM port, and upload the sketch.
 
-> ![Note]
+> [Note]
 > If the board fails to upload via Arduino, manually put it into Download Mode by holding the BOOT button, pressing the RST button, and then releasing the BOOT button.
