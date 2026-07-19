@@ -19,5 +19,8 @@ Turn an ESP32 into a wireless plug and play keyboard & mouse
 2. **Upload:**
     - Connect the board, select the correct COM port, and upload the sketch.
 
-> [!NOTE]
-> If the board fails to upload via Arduino, manually put it into Download Mode by holding the BOOT button, pressing the RST button, and then releasing the BOOT button.
+## Usage
+1. Plug the ESP32 into the computer you want to control.
+2. Connect to the Wi-Fi network named `ESP32 Virtual Hid`
+3. Open a web browser and navigate to: [http://192.168.4.1](http://192.168.4.1)
+4. Swipe the trackpad area to move the mouse, tap to click, and use the input field to type text.
