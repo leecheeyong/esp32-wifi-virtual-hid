@@ -22,5 +22,7 @@ Turn an ESP32 into a wireless plug and play keyboard & mouse
 ## Usage
 1. Plug the ESP32 into the computer you want to control.
 2. Connect to the Wi-Fi network named `ESP32 Virtual Hid`
-3. Open a web browser and navigate to: [http://192.168.4.1](http://192.168.4.1)
-4. Swipe the trackpad area to move the mouse, tap to click, and use the input field to type text.
+> [!NOTE]
+> You may change the ssid and the Wi-Fi password in `sketch.ino` 
+4. Open a web browser and navigate to: [http://192.168.4.1](http://192.168.4.1)
+5. Swipe the trackpad area to move the mouse, tap to click, and use the input field to type text.
