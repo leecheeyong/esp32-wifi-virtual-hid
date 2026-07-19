@@ -10,17 +10,15 @@ USBHIDKeyboard Keyboard;
 WebServer server(80);
 Preferences preferences;
 
-const char* ssid = "S2-Air-Pad";
+const char* ssid = "ESP32 Virtual HID";
 const char* password = "password123";
 
-// Helper to keep connections alive and reduce latency overhead
 void sendOK() {
     server.sendHeader("Connection", "keep-alive");
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.send(200);
 }
 
-// Safe mouse movement handling to prevent 8-bit overflow on fast swipes
 void safeMouseMove(int x, int y, int wheel = 0) {
     while (x != 0 || y != 0 || wheel != 0) {
         int mx = constrain(x, -127, 127);
@@ -31,7 +29,6 @@ void safeMouseMove(int x, int y, int wheel = 0) {
     }
 }
 
-// Resolve a key code integer to the proper HID key constant
 uint8_t resolveKey(int code) {
     switch(code) {
         case 0xB1: return KEY_ESC;
@@ -73,7 +70,6 @@ uint8_t resolveKey(int code) {
     }
 }
 
-// C++ Engine to execute individual Ducky Commands
 void executeCommand(String line) {
     line.trim();
     if (line.length() == 0 || line.startsWith("REM")) return;
@@ -143,7 +139,7 @@ const char* html = R"rawliteral(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AirPad Pro</title>
+    <title>ESP32 Virtual HID</title>
     <style>
         :root { 
             --bg: #09090b; --surface: rgba(255, 255, 255, 0.05); --surface-active: rgba(255, 255, 255, 0.12); 
@@ -239,13 +235,13 @@ const char* html = R"rawliteral(
             
             <div class="btn-group" id="btnGroup1">
                 <button class="btn btn-primary" id="runBtn" onclick="runDucky()">▶ Run</button>
-                <button class="btn btn-record" id="recordBtn" onclick="toggleRecord()">⏺ Record</button>
-                <button class="btn" onclick="saveScript()">💾 Save</button>
+                <button class="btn btn-record" id="recordBtn" onclick="toggleRecord()">Record</button>
+                <button class="btn" onclick="saveScript()">Save</button>
             </div>
             <div class="btn-group" id="btnGroup2">
-                <button class="btn" onclick="setStartup()">⚡ Set Startup</button>
+                <button class="btn" onclick="setStartup()">Set Startup</button>
                 <button class="btn btn-danger" onclick="delStartup()">Clear Startup</button>
-                <button class="btn btn-danger" onclick="deleteScript()">🗑 Delete</button>
+                <button class="btn btn-danger" onclick="deleteScript()">Delete</button>
             </div>
         </div>
 
@@ -275,7 +271,6 @@ const char* html = R"rawliteral(
         const padText = document.getElementById('padText');
         let isDuckyMode = false;
 
-        // Ultra-fast fetch with connection keep-alive
         const fetchOpts = { keepalive: true, cache: 'no-store' };
         function fastFetch(url) { return fetch(url, fetchOpts).catch(()=>{}); }
 
@@ -290,7 +285,6 @@ const char* html = R"rawliteral(
             if (isDuckyMode) refreshScriptList();
         }
 
-        // Script Management
         let scripts = JSON.parse(localStorage.getItem('airpad_scripts')) || { "Default": "STRING Hello World\nENTER" };
         function refreshScriptList() {
             scriptSelect.innerHTML = '<option value="">-- Create New / Select Script --</option>';
@@ -313,7 +307,6 @@ const char* html = R"rawliteral(
             }
         }
 
-        // ESP32 Flash Storage
         async function setStartup() {
             let res = await fetch('/startup', { method: 'POST', body: duckyArea.value });
             if (res.ok) alert("Startup Script saved to ESP32 Flash!");
@@ -323,17 +316,16 @@ const char* html = R"rawliteral(
             if (res.ok) alert("Startup Script cleared from ESP32.");
         }
 
-        // Macro Recorder
         let isRecording = false, lastActionTime = 0;
         function toggleRecord() {
             isRecording = !isRecording;
             const btn = document.getElementById('recordBtn');
             if (isRecording) {
-                btn.classList.add('recording'); btn.innerText = "⏹ Stop";
+                btn.classList.add('recording'); btn.innerText = "Stop";
                 duckyArea.value = "MOUSE_RESET\n"; lastActionTime = Date.now();
                 padText.innerText = "RECORDING";
             } else {
-                btn.classList.remove('recording'); btn.innerText = "⏺ Record";
+                btn.classList.remove('recording'); btn.innerText = "Record";
                 padText.innerText = "TOUCH";
             }
         }
@@ -347,7 +339,6 @@ const char* html = R"rawliteral(
             duckyArea.scrollTop = duckyArea.scrollHeight; // Auto-scroll
         }
 
-        // Keyboard Logic
         kInput.addEventListener('input', () => {
             let val = kInput.value;
             if (val.length > 0) {
@@ -373,7 +364,7 @@ const char* html = R"rawliteral(
                     await new Promise(r => setTimeout(r, 15));
                 }
             }
-            btn.innerText = "▶ Run";
+            btn.innerText = "Run";
         }
 
         // --- TRACKPAD LOGIC WITH DRAG ---
@@ -399,7 +390,6 @@ const char* html = R"rawliteral(
             lastX = startX = avgX; lastY = startY = avgY;
             isMoving = true; hasSwiped = false; touchStartTime = Date.now();
 
-            // Detect double-tap timing for drag initiation
             if (e.touches.length === 1) {
                 if (Date.now() - lastTapTime < 300) potentialDrag = true;
                 else potentialDrag = false;
@@ -456,7 +446,6 @@ const char* html = R"rawliteral(
             pad.classList.remove('active');
             
             if (e.touches.length === 0) {
-                // End Drag
                 if (isDragging) {
                     isDragging = false;
                     pad.classList.remove('dragging');
@@ -464,7 +453,6 @@ const char* html = R"rawliteral(
                     padText.innerText = isRecording ? "RECORDING" : "TOUCH";
                     potentialDrag = false;
                 } 
-                // Process standard taps
                 else if (!hasSwiped && Date.now() - touchStartTime < 250) {
                     if (maxTouches === 1) { 
                         fastFetch('/cl'); logAction('MOUSE_CLICK LEFT'); 
@@ -476,7 +464,6 @@ const char* html = R"rawliteral(
             }
         }, { passive: false });
 
-        // High-Speed Background Sender Loop
         setInterval(() => {
             if (isSending) return;
             let sendX = Math.round(accumX), sendY = Math.round(accumY), sendS = Math.round(accumScroll);
@@ -488,12 +475,11 @@ const char* html = R"rawliteral(
                 if(sendX !== 0 || sendY !== 0) logAction(`MOUSE_MOVE ${sendX} ${sendY}`);
                 if(sendS !== 0) logAction(`MOUSE_SCROLL ${sendS}`);
                 
-                // Using fastFetch ensures promise rejection doesn't lock the loop forever
                 fastFetch(`/m?dx=${sendX}&dy=${sendY}&s=${sendS}`).finally(() => {
                     isSending = false; 
                 });
             }
-        }, 15); // Reduced interval to 15ms for silky smooth 60fps tracking
+        }, 15);
 
         // ── VIRTUAL KEYBOARD ──
         const kbPanel = document.getElementById('kbPanel');
@@ -541,7 +527,6 @@ const char* html = R"rawliteral(
                 }
                 h += '</div>';
             }
-            // Extra nav row: Ins, Home, End, PgUp, PgDn, PrtSc
             h += '<div class="kb-fn-row">';
             const navKeys = [['Ins',0xD1],['Home',0xD3],['End',0xD5],['PgUp',0xD6],['PgDn',0xD7+1]];
             for (const [l,c] of navKeys) h += `<button class="k fn" data-c="${c}">${l}</button>`;
@@ -549,10 +534,8 @@ const char* html = R"rawliteral(
 
             kbPanel.innerHTML = h;
 
-            // Modifier keycodes for toggle behavior
             const modCodes = new Set([0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87]);
 
-            // Attach events using event delegation for performance
             kbPanel.addEventListener('pointerdown', (e) => {
                 const btn = e.target.closest('.k');
                 if (!btn) return;
@@ -573,7 +556,6 @@ const char* html = R"rawliteral(
                         fastFetch('/kp?c=' + code);
                     }
                 } else if (ch !== undefined) {
-                    // Printable character
                     btn.classList.add('held');
                     let sendCh = ch;
                     // If shift is held, apply shift to printable
@@ -582,16 +564,13 @@ const char* html = R"rawliteral(
                     }
                     fastFetch('/k?text=' + encodeURIComponent(sendCh));
                     setTimeout(() => btn.classList.remove('held'), 100);
-                    // Release all modifiers after a printable key press
                     releaseAllMods();
                 } else if (code !== null) {
-                    // Special key (non-modifier)
                     btn.classList.add('held');
                     fastFetch('/kp?c=' + code);
                     setTimeout(() => {
                         fastFetch('/kr?c=' + code);
                         btn.classList.remove('held');
-                        // Release all modifiers after a special key press
                         releaseAllMods();
                     }, 60);
                 }
@@ -633,8 +612,6 @@ void setup() {
             line = strtok(NULL, "\n");
         }
     }
-
-    // Backend Routing
     server.on("/", [](){ server.send(200, "text/html", html); });
     
     server.on("/startup", HTTP_POST, [](){
@@ -648,7 +625,6 @@ void setup() {
     server.on("/cl", [](){ Mouse.click(MOUSE_LEFT); sendOK(); });
     server.on("/cr", [](){ Mouse.click(MOUSE_RIGHT); sendOK(); });
     
-    // Drag Support Endpoints
     server.on("/md", [](){ Mouse.press(MOUSE_LEFT); sendOK(); });
     server.on("/mu", [](){ Mouse.release(MOUSE_LEFT); sendOK(); });
     
@@ -656,7 +632,6 @@ void setup() {
     server.on("/kb", [](){ Keyboard.write(KEY_BACKSPACE); sendOK(); });
     server.on("/en", [](){ Keyboard.write(KEY_RETURN); sendOK(); });
 
-    // Virtual Keyboard: press and release raw keycodes
     server.on("/kp", [](){ 
         uint8_t key = resolveKey(server.arg("c").toInt());
         Keyboard.press(key); 
