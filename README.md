@@ -1,7 +1,7 @@
-<img src="./docs/favicon.png" width="200">
+<img src="./docs/favicon.png" width="100">
 
 # [ESP32 WiFi Virtual Human Interface Device](https://leecheeyong.github.io/esp32-wifi-virtual-hid)
-Turn an ESP32 into a wireless plug and play keyboard & mouse
+Turn your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB keyboard & mouse. Control any target device remotely over a standalone Wi-Fi Access Point. 
 
 ## Tested Devices
 - [x] ESP32-S2 Mini
