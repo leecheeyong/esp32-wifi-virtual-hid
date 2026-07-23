@@ -26,3 +26,6 @@ Turn an ESP32 into a wireless plug and play keyboard & mouse
 > You may change the ssid and the Wi-Fi password in `sketch.ino` 
 4. Open a web browser and navigate to: [http://192.168.4.1](http://192.168.4.1)
 5. Swipe the trackpad area to move the mouse, tap to click, and use the input field to type text.
+
+## License
+This project is available as an open source under the terms of the [GNU Affero General Public License v3.0 License](/LICENSE).
