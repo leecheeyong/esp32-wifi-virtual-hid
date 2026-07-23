@@ -2,9 +2,7 @@
   "name": "ESP32 WiFi Virtual HID",
   "download_base_url": "./firmware",
   "latest_version": "v1.0.0",
-  "versions": [
-    "v1.0.0"
-  ],
+  "versions": ["v1.0.0"],
   "devices": [
     {
       "id": "esp32-s3",

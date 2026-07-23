@@ -3,125 +3,247 @@
 * Copyright (C) 2026-present  Lee Chee Yong
 * @license MIT
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ESP32 WiFi Virtual HID</title>
+    <meta property="og:title" content="ESP32 WiFi Virtual HID" />
+    <meta property="og:site_name" content="ESP32 WiFi Virtual HID" />
+    <meta
+      name="description"
+      content="ESP32 WiFi Virtual HID is a project that turns your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB HID controller. Control any target device remotely over a standalone Wi-Fi Access Point."
+    />
+    <meta
+      property="og:description"
+      content="ESP32 WiFi Virtual HID is a project that turns your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB HID controller. Control any target device remotely over a standalone Wi-Fi Access Point."
+    />
+    <meta
+      name="keywords"
+      content="ESP32, ESP32-S2, ESP32-S3, WiFi, Virtual HID, Web Flasher, WebSerial API, Firmware Flashing, USB HID Controller"
+    />
+    <meta property="og:image" content="./favicon.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        theme: {
-                            DEFAULT: '#9ed7ff',
-                            hover: '#b5e1ff',
-                            muted: 'rgba(158, 215, 255, 0.15)',
-                            border: 'rgba(158, 215, 255, 0.25)',
-                        },
-                        dark: {
-                            bg: '#080a11',
-                            card: '#111420',
-                            input: '#0b0d17',
-                            border: '#1d2235'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
-                    }
-                }
-            }
-        }
-        const year = document.getElementById('year');
-        year.textContent = new Date().getFullYear();
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              theme: {
+                DEFAULT: "#9ed7ff",
+                hover: "#b5e1ff",
+                muted: "rgba(158, 215, 255, 0.15)",
+                border: "rgba(158, 215, 255, 0.25)",
+              },
+              dark: {
+                bg: "#080a11",
+                card: "#111420",
+                input: "#0b0d17",
+                border: "#1d2235",
+              },
+            },
+            fontFamily: {
+              sans: [
+                "Inter",
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Roboto",
+                "sans-serif",
+              ],
+              mono: [
+                "JetBrains Mono",
+                "ui-monospace",
+                "SFMono-Regular",
+                "Consolas",
+                "monospace",
+              ],
+            },
+          },
+        },
+      };
+      const year = document.getElementById("year");
+      year.textContent = new Date().getFullYear();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="favicon.png" />
     <style>
-        body {
-            background-color: #080a11;
-            font-family: 'Inter', sans-serif;
-            color: #f1f5f9;
-        }
-        .theme-glow {
-            box-shadow: 0 0 30px rgba(158, 215, 255, 0.08);
-        }
+      body {
+        background-color: #080a11;
+        font-family: "Inter", sans-serif;
+        color: #f1f5f9;
+      }
+      .theme-glow {
+        box-shadow: 0 0 30px rgba(158, 215, 255, 0.08);
+      }
     </style>
-</head>
-<body class="bg-dark-bg text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-[#9ed7ff]/30 selection:text-[#9ed7ff]">
-    <header class="border-b border-dark-border bg-dark-bg/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 h-16 flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-3 group">
-                <img src="favicon.png" alt="ESP32 Virtual HID Icon" class="w-8 h-8 object-contain group-hover:scale-105 transition-transform">
-                <span class="font-bold text-base text-white tracking-tight">ESP32 Virtual HID</span>
-            </a>
+  </head>
+  <body
+    class="bg-dark-bg text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-[#9ed7ff]/30 selection:text-[#9ed7ff]"
+  >
+    <header
+      class="border-b border-dark-border bg-dark-bg/80 backdrop-blur sticky top-0 z-50"
+    >
+      <div
+        class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 h-16 flex items-center justify-between"
+      >
+        <a href="index.html" class="flex items-center gap-3 group">
+          <img
+            src="favicon.png"
+            alt="ESP32 Virtual HID Icon"
+            class="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
+          />
+          <span class="font-bold text-base text-white tracking-tight"
+            >ESP32 Virtual HID</span
+          >
+        </a>
 
-            <nav class="flex items-center gap-6 text-sm font-medium text-slate-400">
-                <a href="index.html" class="text-[#9ed7ff] font-semibold">Overview</a>
-                <a href="flasher.html" class="hover:text-[#9ed7ff] transition-colors">Flasher</a>
-                <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid" target="_blank" class="hover:text-[#9ed7ff] transition-colors">GitHub</a>
-            </nav>
-        </div>
+        <nav class="flex items-center gap-6 text-sm font-medium text-slate-400">
+          <a href="index.html" class="text-[#9ed7ff] font-semibold">Overview</a>
+          <a href="flasher.html" class="hover:text-[#9ed7ff] transition-colors"
+            >Flasher</a
+          >
+          <a
+            href="https://github.com/leecheeyong/esp32-wifi-virtual-hid"
+            target="_blank"
+            class="hover:text-[#9ed7ff] transition-colors"
+            >GitHub</a
+          >
+        </nav>
+      </div>
     </header>
 
-    <main class="max-w-6xl w-full mx-auto px-6 md:px-10 lg:px-12 py-16 md:py-24 flex-grow space-y-20">
-        <section class="space-y-6">
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] max-w-4xl">
-                Wireless USB <span class="text-[#9ed7ff]">Keyboard & Mouse</span>
-            </h1>
-            
-            <p class="text-base sm:text-xl text-slate-300 leading-relaxed max-w-2xl font-normal">
-                Turn your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB HID controller. Control any target device remotely over a standalone Wi-Fi Access Point.
-            </p>
+    <main
+      class="max-w-6xl w-full mx-auto px-6 md:px-10 lg:px-12 py-16 md:py-24 flex-grow space-y-20"
+    >
+      <section class="space-y-6">
+        <h1
+          class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] max-w-4xl"
+        >
+          Wireless USB <span class="text-[#9ed7ff]">Keyboard & Mouse</span>
+        </h1>
 
-            <div class="flex flex-wrap items-center gap-4 pt-4">
-                <a href="flasher.html" class="bg-[#9ed7ff] hover:bg-[#b5e1ff] text-slate-950 font-bold py-3.5 px-7 rounded-xl text-base transition-all shadow-[0_0_20px_rgba(158,215,255,0.25)] flex items-center gap-2">
-                    Flash Firmware →
-                </a>
-                <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid" target="_blank" class="bg-dark-card hover:bg-dark-input text-white border border-dark-border font-semibold py-3.5 px-7 rounded-xl text-base transition-colors">
-                    GitHub Repository
-                </a>
+        <p
+          class="text-base sm:text-xl text-slate-300 leading-relaxed max-w-2xl font-normal"
+        >
+          Turn your affordable ESP32-S2 or ESP32-S3 into a driverless,
+          plug-and-play USB HID controller. Control any target device remotely
+          over a standalone Wi-Fi Access Point.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4 pt-4">
+          <a
+            href="flasher.html"
+            class="bg-[#9ed7ff] hover:bg-[#b5e1ff] text-slate-950 font-bold py-3.5 px-7 rounded-xl text-base transition-all shadow-[0_0_20px_rgba(158,215,255,0.25)] flex items-center gap-2"
+          >
+            Flash Firmware →
+          </a>
+          <a
+            href="https://github.com/leecheeyong/esp32-wifi-virtual-hid"
+            target="_blank"
+            class="bg-dark-card hover:bg-dark-input text-white border border-dark-border font-semibold py-3.5 px-7 rounded-xl text-base transition-colors"
+          >
+            GitHub Repository
+          </a>
+        </div>
+      </section>
+
+      <section class="space-y-8 border-t border-dark-border pt-16">
+        <h2
+          class="text-xs font-semibold text-[#9ed7ff] uppercase tracking-wider"
+        >
+          Quick Setup Guide
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div
+            class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow"
+          >
+            <span
+              class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20"
+              >01</span
+            >
+            <div class="font-bold text-white text-lg">Flash Firmware</div>
+            <div class="text-base text-slate-300 leading-relaxed">
+              Program your ESP32 in 1 click using the browser WebSerial flasher.
             </div>
-        </section>
+          </div>
 
-        <section class="space-y-8 border-t border-dark-border pt-16">
-            <h2 class="text-xs font-semibold text-[#9ed7ff] uppercase tracking-wider">Quick Setup Guide</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow">
-                    <span class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20">01</span>
-                    <div class="font-bold text-white text-lg">Flash Firmware</div>
-                    <div class="text-base text-slate-300 leading-relaxed">Program your ESP32 in 1 click using the browser WebSerial flasher.</div>
-                </div>
-
-                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow">
-                    <span class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20">02</span>
-                    <div class="font-bold text-white text-lg">Plug USB</div>
-                    <div class="text-base text-slate-300 leading-relaxed">Plug the board into the PC or Mac host. Recognized automatically as USB HID.</div>
-                </div>
-
-                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow">
-                    <span class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20">03</span>
-                    <div class="font-bold text-white text-lg">Connect & Control</div>
-                    <div class="text-base text-slate-300 leading-relaxed">Join Wi-Fi <code class="text-[#9ed7ff] font-mono text-xs bg-dark-input px-2 py-0.5 rounded border border-dark-border">ESP32 Virtual HID</code> and open <code class="text-[#9ed7ff] font-mono text-xs bg-dark-input px-2 py-0.5 rounded border border-dark-border">http://192.168.4.1</code>.</div>
-                </div>
+          <div
+            class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow"
+          >
+            <span
+              class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20"
+              >02</span
+            >
+            <div class="font-bold text-white text-lg">Plug USB</div>
+            <div class="text-base text-slate-300 leading-relaxed">
+              Plug the board into the PC or Mac host. Recognized automatically
+              as USB HID.
             </div>
-        </section>
+          </div>
 
+          <div
+            class="bg-dark-card border border-dark-border rounded-2xl p-6 lg:p-8 space-y-3 theme-glow"
+          >
+            <span
+              class="inline-block px-3 py-1 rounded-lg bg-[#9ed7ff]/10 text-[#9ed7ff] font-mono text-xs font-bold border border-[#9ed7ff]/20"
+              >03</span
+            >
+            <div class="font-bold text-white text-lg">Connect & Control</div>
+            <div class="text-base text-slate-300 leading-relaxed">
+              Join Wi-Fi
+              <code
+                class="text-[#9ed7ff] font-mono text-xs bg-dark-input px-2 py-0.5 rounded border border-dark-border"
+                >ESP32 Virtual HID</code
+              >
+              and open
+              <code
+                class="text-[#9ed7ff] font-mono text-xs bg-dark-input px-2 py-0.5 rounded border border-dark-border"
+                >http://192.168.4.1</code
+              >.
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <footer class="border-t border-dark-border py-8 text-center text-xs text-slate-400">
-        <div class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between">
-            <span>Copyright (C) <span id="year">2026</span> <a href="https://github.com/leecheeyong" target="_blank" class="hover:text-[#9ed7ff] transition-colors">Chee Yong Lee</a> & <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid/graphs/contributors" target="_blank" class="hover:text-[#9ed7ff] transition-colors">Contributors</a></span>
-            <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid" target="_blank" class="hover:text-[#9ed7ff] transition-colors">MIT License</a>
-        </div>
+    <footer
+      class="border-t border-dark-border py-8 text-center text-xs text-slate-400"
+    >
+      <div
+        class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between"
+      >
+        <span
+          >Copyright (C) <span id="year">2026</span>
+          <a
+            href="https://github.com/leecheeyong"
+            target="_blank"
+            class="hover:text-[#9ed7ff] transition-colors"
+            >Chee Yong Lee</a
+          >
+          &
+          <a
+            href="https://github.com/leecheeyong/esp32-wifi-virtual-hid/graphs/contributors"
+            target="_blank"
+            class="hover:text-[#9ed7ff] transition-colors"
+            >Contributors</a
+          ></span
+        >
+        <a
+          href="https://github.com/leecheeyong/esp32-wifi-virtual-hid"
+          target="_blank"
+          class="hover:text-[#9ed7ff] transition-colors"
+          >MIT License</a
+        >
+      </div>
     </footer>
-
-</body>
+  </body>
 </html>
