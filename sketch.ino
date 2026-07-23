@@ -11,8 +11,8 @@ USBHIDKeyboard Keyboard;
 WebServer server(80);
 Preferences preferences;
 
-const char* ssid = "ESP32 Virtual HID";
-const char* password = "password123";
+String ssid = "ESP32 Virtual HID";
+String password = "password123";
 
 void sendOK() {
     server.sendHeader("Connection", "keep-alive");
@@ -140,7 +140,10 @@ void setup() {
     USB.begin();
     
     preferences.begin("airpad", false);
-    WiFi.softAP(ssid, password);
+    ssid = preferences.getString("wifi_ssid", ssid);
+    password = preferences.getString("wifi_pass", password);
+    
+    WiFi.softAP(ssid.c_str(), password.c_str());
     
     // STARTUP SCRIPT EXECUTION
     String bootScript = preferences.getString("boot_script", "");
@@ -200,6 +203,26 @@ void setup() {
     server.on("/ducky", [](){
         executeCommand(server.arg("cmd"));
         sendOK();
+    });
+
+    server.on("/wifi", HTTP_POST, [](){
+        if (server.hasArg("ssid") || server.hasArg("pass")) {
+            if (server.hasArg("ssid")) {
+                String newSsid = server.arg("ssid");
+                if (newSsid.length() > 0) {
+                    preferences.putString("wifi_ssid", newSsid);
+                }
+            }
+            if (server.hasArg("pass")) {
+                String newPass = server.arg("pass");
+                preferences.putString("wifi_pass", newPass);
+            }
+            sendOK();
+            delay(500);
+            ESP.restart(); 
+        } else {
+            server.send(400, "text/plain", "Bad Request");
+        }
     });
 
     server.begin();
