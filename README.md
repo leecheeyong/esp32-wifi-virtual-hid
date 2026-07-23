@@ -14,6 +14,8 @@ Turn your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB keyboard & m
 - **Standalone Network:** Creates its own Wi-Fi network (Access Point), meaning it works anywhere without needing an existing router.
 - **On-Screen Trackpad:** Smooth and optimized deadzone filtering to prevent cursor drift, network flooding, and jitter.
 - **Web UI:** A minimalist interface that scales perfectly across portrait and landscape orientations on mobile/tablets.
+- **Customizable:** Easily edit the Wi-Fi network SSID & password, toggle tap vibration, scroll direction & key repeat options through the Web UI.
+- **Ducky Script Support:** Record keyboard/mouse inputs, edit scripts, save and run them as an automation, users can even specify scripts to be run on startup.
 
 ## Setup and Installation
 
