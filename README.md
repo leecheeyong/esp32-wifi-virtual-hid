@@ -1,4 +1,4 @@
-![](./docs/favicon.png)
+<img src="./docs/favicon.png" width="200">
 
 # ESP32 WiFi Virtual Human Interface Device
 Turn an ESP32 into a wireless plug and play keyboard & mouse
