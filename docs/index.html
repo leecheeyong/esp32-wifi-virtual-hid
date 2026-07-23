@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 WebSerial Flasher</title>
+    <!-- Import official Espressif WebSerial Esptool stub bundle -->
+    <script src="https://unpkg.com"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        h1 { margin-top: 0; font-size: 24px; text-align: center; color: #fff; }
+        .version-badge {
+            display: inline-block;
+            background: #334155;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 15px;
+        }
+        #connectBtn { background-color: var(--primary); color: white; }
+        #connectBtn:hover { background-color: #2563eb; }
+        #flashBtn { background-color: var(--success); color: white; }
+        #flashBtn:hover { background-color: #16a34a; }
+        button:disabled {
+            background-color: #475569 !important;
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+        }
+        #log {
+            background: #020617;
+            color: #38bdf8;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid #334155;
+        }
+        .progress-container {
+            background: #334155;
+            border-radius: 100px;
+            align-items: center;
+            position: relative;
+            height: 20px;
+            width: 100%;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .progress-bar {
+            background: var(--success);
+            border-radius: 100px;
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ESP32 Virtual HID Flasher</h1>
+    <center><span class="version-badge">Target Release: v1.0.0</span></center>
+    
+    <button id="connectBtn">1. Connect Target Board</button>
+    
+    <div class="progress-container" id="progressWrapper">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <button id="flashBtn" disabled>2. Flash Firmware</button>
+    
+    <div id="log">System initialized. Click 'Connect Target Board' to begin...</div>
+</div>
+
+<script>
+    // --- CONFIGURATION MANAGEMENT ---
+    // Change these values to match your specific GitHub repository deployment
+    const GITHUB_USERNAME = "YOUR_GITHUB_USERNAME";
+    const GITHUB_REPO = "YOUR_REPO_NAME";
+    const FIRMWARE_VERSION = "v1.0.0";
+    
+    // Absolute root tracking link for GitHub Release browser downloads
+    const RELEASE_BASE_URL = `https://github.com{GITHUB_USERNAME}/${GITHUB_REPO}/releases/download/${FIRMWARE_VERSION}/`;
+
+    // Extract esptool-js modules from window namespace injection
+    const { ESPLoader, Transport } = window.esptooljs;
+
+    let device = null;
+    let transport = null;
+    let esploader = null;
+    let stagedBinaryBuffer = null;
+    let calculatedFlashAddress = 0x0000;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const flashBtn = document.getElementById('flashBtn');
+    const logDiv = document.getElementById('log');
+    const progressWrapper = document.getElementById('progressWrapper');
+    const progressBar = document.getElementById('progressBar');
+
+    function logMsg(text) {
+        logDiv.innerHTML += `<br>[*] ${text}`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // Clear logs clean handler stub needed by the library interface wrapper
+    function logClear() {
+        logDiv.innerHTML = "[*] Status Log Cleared.";
+    }
+
+    // 1. Connection and Auto-Asset Mapping Sequence
+    connectBtn.addEventListener('click', async () => {
+        if (!navigator.serial) {
+            logMsg("ERROR: WebSerial API is not supported by this browser. Use Chrome, Edge, or Opera over HTTPS.");
+            return;
+        }
+
+        try {
+            logMsg("Opening browser hardware serial selection frame...");
+            device = await navigator.serial.requestPort();
+            transport = new Transport(device);
+            
+            esploader = new ESPLoader({
+                transport: transport,
+                baudrate: 115200,
+                terminal: {
+                    clean: () => logClear(),
+                    writeLine: (msg) => logMsg(msg)
+                }
+            });
+
+            logMsg("Initializing handshake loop with ESP32 bootloader...");
+            await esploader.main();
+            
+            const rawChipName = esploader.chipName.toUpperCase();
+            logMsg(`Hardware Verified: Detected ${rawChipName}`);
+
+            // Direct mapping logic to target your exact asset naming convention
+            let targetAssetBinaryName = "";
+            
+            if (rawChipName.includes("ESP32-S3")) {
+                targetAssetBinaryName = `esp32-s3-virtual-hid-${FIRMWARE_VERSION}.bin`;
+                calculatedFlashAddress = 0x0000; // S3 matches entry layout block address zero
+            } else if (rawChipName.includes("ESP32-S2")) {
+                // Defaulting to standard S2 build variant. 
+                // Change string target to 'esp32-s2-mini-virtual-hid-' if using the mini profile exclusively.
+                targetAssetBinaryName = `esp32-s2-virtual-hid-${FIRMWARE_VERSION}.bin`;
+                calculatedFlashAddress = 0x10000; // Legacy architecture layout index
+            } else if (rawChipName.includes("ESP32-C3")) {
+                targetAssetBinaryName = `esp32-c3-virtual-hid-${FIRMWARE_VERSION}.bin`;
+                calculatedFlashAddress = 0x0000;
+            } else {
+                throw new Error(`Connected architecture (${rawChipName}) is not supported by this release distribution.`);
+            }
+
+            const downloadUrl = `${RELEASE_BASE_URL}${targetAssetBinaryName}`;
+            logMsg(`Fetching binary directly from GitHub Release asset link: ${targetAssetBinaryName}...`);
+
+            const assetResponse = await fetch(downloadUrl);
+            if (!assetResponse.ok) throw new Error(`Network failure downloading asset from GitHub. Status Code: ${assetResponse.status}`);
+            
+            stagedBinaryBuffer = await assetResponse.arrayBuffer();
+            logMsg(`Download successful! Staged size: ${stagedBinaryBuffer.byteLength} bytes.`);
+            logMsg(`Target Flash Mapping Address assigned to: 0x${calculatedFlashAddress.toString(16).toUpperCase()}`);
+            
+            flashBtn.disabled = false;
+            connectBtn.disabled = true;
+
+        } catch (err) {
+            logMsg(`[CRITICAL ERROR]: ${err.message}`);
+            flashBtn.disabled = true;
+        }
+    });
+
+    // 2. Hardware Flashing Core Sequence
+    flashBtn.addEventListener('click', async () => {
+        if (!stagedBinaryBuffer || !esploader) return;
+
+        try {
+            flashBtn.disabled = true;
+            progressWrapper.style.display = "block";
+            progressBar.style.width = "0%";
+            logMsg("Preparing flash sectors. Do not disconnect the device...");
+
+            const fileArray = [{
+                data: new Uint8Array(stagedBinaryBuffer),
+                address: calculatedFlashAddress
+            }];
+
+            // Stream flashing execution
+            await esploader.writeFlash({
+                fileArray: fileArray,
+                flashSize: 'keep',
+                flashMode: 'keep',
+                flashFreq: 'keep',
+                eraseAll: false,
+                compress: true,
+                // Stream dynamic percentage calculations directly to UI visual anchor bar
+                reportProgress: (fileIndex, written, total) => {
+                    const percentage = Math.round((written / total) * 100);
+                    progressBar.style.width = `${percentage}%`;
+                }
+            });
+
+            logMsg("Flash process finished successfully. Running software restart sequence...");
+            
+            // Toggle Data Terminal Ready pin to execution toggle
+            await transport.setDTR(false);
+            await new Promise(resolve => setTimeout(resolve, 150));
+            await transport.setDTR(true);
+            
+            logMsg("ESP32 system successfully running your new code layout!");
+            progressWrapper.style.display = "none";
+
+        } catch (err) {
+            logMsg(`[FLASH FAILURE]: ${err.message}`);
+            flashBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
