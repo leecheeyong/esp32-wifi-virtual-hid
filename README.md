@@ -4,8 +4,10 @@
 Turn your ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB keyboard & mouse. Control any target device remotely over a standalone Wi-Fi Access Point. 
 
 ## Tested Devices
-- [x] ESP32-S2 Mini
-- [x] ESP32-S3 N16R8
+| Device | Support | Note |
+| ------ | ------- | ---- |
+| **ESP32-S2 Mini** | ✅ | Works well |
+| **ESP32-S3 N16R8** | ✅ | Exceptionally well |
 
 ## Features
 - **Native USB HID:** Acts as a standard plug-and-play USB mouse and keyboard. No client software required on the host computer.
