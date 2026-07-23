@@ -1,7 +1,7 @@
 /**
 * ESP32 WiFi Virtual HID
 * Copyright (C) 2026-present  Lee Chee Yong
-* @license GNU Affero General Public License v3.0
+* @license MIT
 **/
 #include "WiFi.h"
 #include "WebServer.h"
