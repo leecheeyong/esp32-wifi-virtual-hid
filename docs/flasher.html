@@ -1,0 +1,665 @@
+<!--
+* ESP32 WiFi Virtual HID
+* Copyright (C) 2026-present  Lee Chee Yong
+* @license MIT
+-->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Virtual HID Web Flasher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            DEFAULT: '#9ed7ff',
+                            hover: '#b5e1ff',
+                            muted: 'rgba(158, 215, 255, 0.15)',
+                            border: 'rgba(158, 215, 255, 0.25)',
+                        },
+                        dark: {
+                            bg: '#080a11',
+                            card: '#111420',
+                            input: '#0b0d17',
+                            border: '#1d2235'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        body {
+            background-color: #080a11;
+            font-family: 'Inter', sans-serif;
+            color: #f1f5f9;
+        }
+        .theme-glow {
+            box-shadow: 0 0 30px rgba(158, 215, 255, 0.08);
+        }
+        .theme-button-glow:hover {
+            box-shadow: 0 0 25px rgba(158, 215, 255, 0.35);
+        }
+        .dropdown-shadow {
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(158, 215, 255, 0.1);
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #0b0d17;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #1d2235;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-[#9ed7ff]/30 selection:text-[#9ed7ff]">
+    <header class="border-b border-dark-border bg-dark-bg/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group">
+                <img src="favicon.png" alt="ESP32 Virtual HID Icon" class="w-8 h-8 object-contain group-hover:scale-105 transition-transform">
+                <span class="font-bold text-base text-white tracking-tight">ESP32 Virtual HID</span>
+            </a>
+
+            <nav class="flex items-center gap-6 text-sm font-medium text-slate-400">
+                <a href="index.html" class="hover:text-[#9ed7ff] transition-colors">Overview</a>
+                <a href="flasher.html" class="text-[#9ed7ff] font-semibold">Flasher</a>
+                <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid" target="_blank" class="hover:text-[#9ed7ff] transition-colors">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-3xl w-full mx-auto px-6 py-12 flex-grow flex flex-col justify-center">
+        
+        <div class="mb-8 text-center space-y-2">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">WebSerial Flasher</h1>
+            <p class="text-base text-slate-300">Program your ESP32 board directly in your browser with zero installation.</p>
+        </div>
+
+        <div id="unsupportedWarning" class="hidden mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm">
+            ⚠️ <strong>WebSerial API Not Supported:</strong> Please open this page in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on Desktop to flash hardware devices.
+        </div>
+
+        <div class="bg-dark-card border border-dark-border rounded-2xl p-6 sm:p-8 space-y-6 theme-glow">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Target Hardware Device
+                    </label>
+                    <div class="relative">
+                        <button type="button" id="deviceDropdownBtn" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3.5 text-base text-white text-left flex items-center justify-between focus:outline-none focus:border-[#9ed7ff] focus:ring-1 focus:ring-[#9ed7ff] transition-all cursor-pointer">
+                            <span id="deviceDropdownLabel" class="font-medium truncate">Loading devices...</span>
+                            <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200" id="deviceChevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <div id="deviceDropdownMenu" class="hidden absolute top-full left-0 right-0 mt-2 bg-dark-card border border-dark-border rounded-xl z-40 overflow-hidden py-1 backdrop-blur-xl dropdown-shadow divide-y divide-dark-border/40">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Firmware Release
+                    </label>
+                    <div class="relative">
+                        <button type="button" id="versionDropdownBtn" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3.5 text-base text-white text-left flex items-center justify-between focus:outline-none focus:border-[#9ed7ff] focus:ring-1 focus:ring-[#9ed7ff] transition-all cursor-pointer">
+                            <span id="versionDropdownLabel" class="font-medium truncate">Loading versions...</span>
+                            <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200" id="versionChevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div id="versionDropdownMenu" class="hidden absolute top-full left-0 right-0 mt-2 bg-dark-card border border-dark-border rounded-xl z-40 overflow-hidden py-1 backdrop-blur-xl dropdown-shadow divide-y divide-dark-border/40">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="s3BootTip" class="rounded-xl bg-amber-500/[0.07] border border-amber-500/20 p-4 space-y-2">
+                <div class="flex items-start gap-3">
+                    <div class="mt-0.5 shrink-0 w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-1.5 text-sm">
+                        <p class="font-semibold text-amber-200">Before Flashing:</p>
+                        <p class="text-slate-300 leading-relaxed text-xs sm:text-sm">
+                            Hold down the <strong class="text-white">BOOT</strong> button while plugging in the USB cable to enter bootloader mode.
+                        </p>
+                        <div class="flex items-center gap-2 pt-1">
+                            <span class="text-slate-400 text-xs">Alternatively, try the 1200bps reset method →</span>
+                            <button id="resetBpsBtn" type="button" class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 hover:border-amber-500/40 rounded-lg px-3 py-1.5 transition-all cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                1200bps Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-dark-input rounded-xl border border-dark-border flex items-center justify-between text-xs font-mono text-slate-400">
+                <span id="downloadUrlText" class="truncate mr-3 text-[#9ed7ff]">./firmware/v1.0.0/esp32-s3-virtual-hid-v1.0.0.bin</span>
+                <a id="directDownloadBtn" href="#" target="_blank" download class="text-white hover:text-[#9ed7ff] underline shrink-0 font-sans font-medium">
+                    Download .bin
+                </a>
+            </div>
+
+            <div class="pt-2 space-y-3">
+                <div class="flex items-center justify-between p-3 bg-dark-input rounded-xl border border-dark-border">
+                    <label for="eraseFlashCheckbox" class="flex items-center gap-2.5 cursor-pointer select-none text-xs text-slate-300">
+                        <input type="checkbox" id="eraseFlashCheckbox" checked class="w-4 h-4 rounded border-dark-border text-[#9ed7ff] focus:ring-[#9ed7ff] bg-dark-card cursor-pointer accent-[#9ed7ff]">
+                        <span>Erase flash memory before installing</span>
+                    </label>
+                    <button id="eraseOnlyBtn" type="button" disabled class="text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-lg px-2.5 py-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                        Erase Only
+                    </button>
+                </div>
+
+                <button id="connectBtn" class="w-full bg-[#9ed7ff] hover:bg-[#b5e1ff] text-slate-950 font-bold py-3.5 px-6 rounded-xl text-base transition-all cursor-pointer theme-button-glow flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span>Connect Device</span>
+                </button>
+
+                <div id="progressWrapper" class="hidden space-y-1.5 pt-1">
+                    <div class="flex justify-between text-xs font-mono">
+                        <span id="progressStatusText" class="text-slate-300">Writing flash memory...</span>
+                        <span id="progressPercent" class="text-[#9ed7ff] font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-dark-input rounded-full h-2 overflow-hidden border border-dark-border">
+                        <div id="progressBar" class="bg-[#9ed7ff] h-full w-0 transition-all duration-150 shadow-[0_0_12px_#9ed7ff]"></div>
+                    </div>
+                </div>
+
+                <button id="flashBtn" disabled class="hidden w-full bg-[#9ed7ff] hover:bg-[#b5e1ff] text-slate-950 font-bold py-3.5 px-6 rounded-xl text-base transition-all cursor-pointer theme-button-glow flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span>Install Firmware</span>
+                </button>
+            </div>
+
+            <div class="pt-4 border-t border-dark-border space-y-2">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span class="font-mono">Console Output</span>
+                    <button id="clearLogBtn" class="hover:text-white transition-colors cursor-pointer">Clear</button>
+                </div>
+                <div id="logConsole" class="bg-dark-input border border-dark-border rounded-xl p-4 font-mono text-xs text-[#9ed7ff] h-36 overflow-y-auto space-y-1 scrollbar-thin">
+                    <div class="text-slate-400 italic font-sans text-xs">Ready. Click 'Connect Device' to begin hardware flashing.</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="border-t border-dark-border py-6 text-center text-xs text-slate-400">
+        <div class="max-w-6xl mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between">
+            <span>Copyright (C) <span id="year">2026</span> <a href="https://github.com/leecheeyong" target="_blank" class="hover:text-[#9ed7ff] transition-colors">Chee Yong Lee</a> & <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid/graphs/contributors" target="_blank" class="hover:text-[#9ed7ff] transition-colors">Contributors</a></span>
+            <div class="flex items-center gap-4 text-xs text-slate-400">
+                <span class="text-[11px] text-slate-500 font-mono">Powered by <a href="https://github.com/espressif/esptool-js" target="_blank" rel="noopener" class="hover:text-slate-300 transition-colors underline decoration-slate-600/50">esptool-js</a></span>
+                <a href="https://github.com/leecheeyong/esp32-wifi-virtual-hid" target="_blank" class="hover:text-[#9ed7ff] transition-colors">MIT License</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { ESPLoader, Transport } from 'https://unpkg.com/esptool-js@0.6.0/bundle.js';
+
+        let config = null;
+        let serialDevice = null;
+        let transport = null;
+        let esploader = null;
+        let stagedFiles = [];
+
+        let selectedDeviceId = 'esp32-s3';
+        let selectedVersion = 'v1.0.0';
+
+        const deviceDropdownBtn = document.getElementById('deviceDropdownBtn');
+        const deviceDropdownLabel = document.getElementById('deviceDropdownLabel');
+        const deviceDropdownMenu = document.getElementById('deviceDropdownMenu');
+        const deviceChevron = document.getElementById('deviceChevron');
+
+        const versionDropdownBtn = document.getElementById('versionDropdownBtn');
+        const versionDropdownLabel = document.getElementById('versionDropdownLabel');
+        const versionDropdownMenu = document.getElementById('versionDropdownMenu');
+        const versionChevron = document.getElementById('versionChevron');
+
+        const downloadUrlText = document.getElementById('downloadUrlText');
+        const directDownloadBtn = document.getElementById('directDownloadBtn');
+        const resetBpsBtn = document.getElementById('resetBpsBtn');
+
+        const connectBtn = document.getElementById('connectBtn');
+        const flashBtn = document.getElementById('flashBtn');
+        const eraseFlashCheckbox = document.getElementById('eraseFlashCheckbox');
+        const eraseOnlyBtn = document.getElementById('eraseOnlyBtn');
+        const progressWrapper = document.getElementById('progressWrapper');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressStatusText = document.getElementById('progressStatusText');
+        const logConsole = document.getElementById('logConsole');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const unsupportedWarning = document.getElementById('unsupportedWarning');
+        const year = document.getElementById('year');
+
+        if (year) year.textContent = new Date().getFullYear();
+        if (!navigator.serial && unsupportedWarning) {
+            unsupportedWarning.classList.remove('hidden');
+        }
+
+        function toggleDropdown(menu, chevron) {
+            const isHidden = menu.classList.contains('hidden');
+            closeAllDropdowns();
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            }
+        }
+
+        function closeAllDropdowns() {
+            deviceDropdownMenu.classList.add('hidden');
+            deviceChevron.classList.remove('rotate-180');
+            versionDropdownMenu.classList.add('hidden');
+            versionChevron.classList.remove('rotate-180');
+        }
+
+        deviceDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(deviceDropdownMenu, deviceChevron);
+        });
+
+        versionDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(versionDropdownMenu, versionChevron);
+        });
+
+        document.addEventListener('click', () => {
+            closeAllDropdowns();
+        });
+
+        window.addEventListener('resize', () => {
+            closeAllDropdowns();
+        }, { passive: true });
+
+        function log(msg, color = 'text-[#9ed7ff]') {
+            const div = document.createElement('div');
+            div.className = color;
+            div.textContent = `> ${msg}`;
+            logConsole.appendChild(div);
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        clearLogBtn.addEventListener('click', () => {
+            logConsole.innerHTML = '<div class="text-slate-400 italic font-sans text-xs">Console cleared.</div>';
+        });
+
+        function getDeviceParts(dev, ver) {
+            if (dev.parts && Array.isArray(dev.parts) && dev.parts.length > 0) {
+                return dev.parts.map(p => ({
+                    offset: parseInt(p.offset, 16) || 0,
+                    offsetHex: p.offset,
+                    filename: p.filename_template.replace('{version}', ver)
+                }));
+            }
+            if (dev.filename_template) {
+                return [{
+                    offset: parseInt(dev.offset, 16) || 0,
+                    offsetHex: dev.offset || "0x0000",
+                    filename: dev.filename_template.replace('{version}', ver)
+                }];
+            }
+            return [];
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('info.json');
+                if (res.ok) {
+                    config = await res.json();
+                }
+            } catch(e) {
+                console.error("Failed to load info.json", e);
+            }
+
+            if (!config) {
+                config = {
+                    download_base_url: "./firmware",
+                    latest_version: "v1.0.0",
+                    versions: ["v1.0.0"],
+                    devices: [
+                        { id: "esp32-s3", name: "ESP32-S3", chip: "ESP32-S3", parts: [{ offset: "0x0000", filename_template: "esp32-s3-virtual-hid-{version}.bin" }], description: "ESP32-S3 Dual-Core SoC (N16R8, SuperMini, DevKit) with direct USB HID." },
+                        { id: "esp32-s2-mini", name: "ESP32-S2 Mini", chip: "ESP32-S2", parts: [
+                            { offset: "0x1000", filename_template: "esp32-s2-mini-virtual-hid-{version}.bootloader.bin" },
+                            { offset: "0x8000", filename_template: "esp32-s2-mini-virtual-hid-{version}.partitions.bin" },
+                            { offset: "0x10000", filename_template: "esp32-s2-mini-virtual-hid-{version}.firmware.bin" }
+                        ], description: "Lolin/Wemos ESP32-S2 Mini board with native USB C port." },
+                        { id: "esp32-s2", name: "ESP32-S2 Standard", chip: "ESP32-S2", parts: [{ offset: "0x0000", filename_template: "esp32-s2-virtual-hid-{version}.bin" }], description: "Generic ESP32-S2 development kit with USB OTG interface." }
+                    ]
+                };
+            }
+
+            const deviceList = config.devices.filter(d => d.id !== 'universal');
+            if (deviceList.length > 0) {
+                selectedDeviceId = deviceList[0].id;
+            }
+
+            if (config.latest_version) {
+                selectedVersion = config.latest_version;
+            }
+
+            renderDropdowns();
+            updatePreview();
+        }
+
+        function renderDropdowns() {
+            const deviceList = config.devices.filter(d => d.id !== 'universal');
+            deviceDropdownMenu.innerHTML = '';
+            deviceList.forEach(dev => {
+                const isSelected = dev.id === selectedDeviceId;
+                const item = document.createElement('div');
+                item.className = `px-4 py-3 text-sm cursor-pointer flex items-center justify-between transition-colors ${
+                    isSelected ? 'bg-[#9ed7ff]/10 text-[#9ed7ff] font-semibold' : 'text-slate-200 hover:bg-dark-input hover:text-white'
+                }`;
+                item.innerHTML = `
+                    <div>
+                        <div class="font-bold">${dev.name}</div>
+                        ${dev.description ? `<div class="text-xs text-slate-400 mt-0.5">${dev.description}</div>` : ''}
+                    </div>
+                    ${isSelected ? '<svg class="w-4 h-4 text-[#9ed7ff] shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' : ''}
+                `;
+                item.addEventListener('click', () => {
+                    selectedDeviceId = dev.id;
+                    renderDropdowns();
+                    updatePreview();
+                    closeAllDropdowns();
+                });
+                deviceDropdownMenu.appendChild(item);
+            });
+
+            const currentDev = deviceList.find(d => d.id === selectedDeviceId) || deviceList[0];
+            if (currentDev) deviceDropdownLabel.textContent = currentDev.name;
+
+            versionDropdownMenu.innerHTML = '';
+            config.versions.forEach(ver => {
+                const isSelected = ver === selectedVersion;
+                const isLatest = ver === config.latest_version;
+                const labelText = `${ver} ${isLatest ? '(Latest Release)' : ''}`;
+                
+                const item = document.createElement('div');
+                item.className = `px-4 py-3 text-sm cursor-pointer flex items-center justify-between transition-colors ${
+                    isSelected ? 'bg-[#9ed7ff]/10 text-[#9ed7ff] font-semibold' : 'text-slate-200 hover:bg-dark-input hover:text-white'
+                }`;
+                item.innerHTML = `
+                    <span>${labelText}</span>
+                    ${isSelected ? '<svg class="w-4 h-4 text-[#9ed7ff] shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' : ''}
+                `;
+                item.addEventListener('click', () => {
+                    selectedVersion = ver;
+                    renderDropdowns();
+                    updatePreview();
+                    closeAllDropdowns();
+                });
+                versionDropdownMenu.appendChild(item);
+            });
+
+            const currentVerIsLatest = selectedVersion === config.latest_version;
+            versionDropdownLabel.textContent = `${selectedVersion} ${currentVerIsLatest ? '(Latest Release)' : ''}`;
+        }
+
+        function updatePreview() {
+            let dev = config.devices.find(d => d.id === selectedDeviceId);
+            if (!dev) dev = config.devices[0];
+
+            const baseUrl = config.download_base_url || './firmware';
+            const parts = getDeviceParts(dev, selectedVersion);
+
+            if (parts.length === 1) {
+                const downloadUrl = `${baseUrl}/${selectedVersion}/${parts[0].filename}`;
+                downloadUrlText.textContent = downloadUrl;
+                directDownloadBtn.href = downloadUrl;
+                directDownloadBtn.style.display = 'inline';
+                directDownloadBtn.textContent = 'Download .bin';
+            } else {
+                const primaryPart = parts.find(p => p.filename.includes('firmware')) || parts[parts.length - 1];
+                const downloadUrl = `${baseUrl}/${selectedVersion}/${primaryPart.filename}`;
+                downloadUrlText.textContent = `3 binaries: bootloader (0x1000), partitions (0x8000), firmware (0x10000)`;
+                directDownloadBtn.href = downloadUrl;
+                directDownloadBtn.style.display = 'inline';
+                directDownloadBtn.textContent = 'Download Firmware';
+            }
+        }
+
+        resetBpsBtn.addEventListener('click', async () => {
+            if (!navigator.serial) return;
+
+            const originalText = resetBpsBtn.innerHTML;
+            resetBpsBtn.disabled = true;
+            resetBpsBtn.innerHTML = `
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Resetting...`;
+            resetBpsBtn.classList.add('opacity-60', 'pointer-events-none');
+
+            try {
+                log('Requesting serial port for 1200bps reset...', 'text-amber-300');
+                const port = await navigator.serial.requestPort();
+
+                log('Opening port at 1200 baud...', 'text-amber-300');
+                await port.open({ baudRate: 1200 });
+
+                log('Deasserting DTR to trigger bootloader entry...', 'text-amber-300');
+                await port.setSignals({ dataTerminalReady: false });
+                await new Promise(r => setTimeout(r, 250));
+
+                await port.close();
+
+                log('Waiting for device to re-enumerate on USB...', 'text-amber-300');
+                await new Promise(r => setTimeout(r, 2000));
+
+                log('1200bps reset complete. Device should now be in bootloader mode.', 'text-emerald-400');
+                log('Click "Connect Device" to continue.', 'text-[#9ed7ff]');
+
+                resetBpsBtn.innerHTML = `
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Done`;
+                resetBpsBtn.classList.remove('opacity-60', 'pointer-events-none');
+                resetBpsBtn.classList.add('!text-emerald-300', '!border-emerald-500/40', '!bg-emerald-500/15');
+                setTimeout(() => {
+                    resetBpsBtn.innerHTML = originalText;
+                    resetBpsBtn.disabled = false;
+                    resetBpsBtn.classList.remove('!text-emerald-300', '!border-emerald-500/40', '!bg-emerald-500/15');
+                }, 3000);
+            } catch (err) {
+                if (err.name === 'NotFoundError') {
+                    log('1200bps reset cancelled — no port selected.', 'text-slate-400');
+                } else {
+                    log(`1200bps reset failed: ${err.message}`, 'text-rose-400');
+                }
+                resetBpsBtn.innerHTML = originalText;
+                resetBpsBtn.disabled = false;
+                resetBpsBtn.classList.remove('opacity-60', 'pointer-events-none');
+            }
+        });
+
+        connectBtn.addEventListener('click', async () => {
+            if (!navigator.serial) return;
+            try {
+                log('Selecting serial port...');
+                serialDevice = await navigator.serial.requestPort();
+                transport = new Transport(serialDevice);
+                
+                esploader = new ESPLoader({
+                    transport: transport,
+                    baudrate: 115200,
+                    terminal: {
+                        clean: () => {},
+                        writeLine: (m) => log(m, 'text-slate-400'),
+                        write: (m) => log(m, 'text-slate-400')
+                    }
+                });
+
+                log('Connecting to ESP32 bootloader...');
+                const detectedChip = await esploader.main();
+                
+                const chip = (detectedChip || esploader.chip?.CHIP_NAME || '').toUpperCase();
+                log(`Connected: ${chip}`, 'text-emerald-400 font-bold');
+
+                if (chip.includes('ESP32-S3')) selectedDeviceId = 'esp32-s3';
+                else if (chip.includes('ESP32-S2') && selectedDeviceId !== 'esp32-s2-mini') selectedDeviceId = 'esp32-s2';
+                
+                renderDropdowns();
+                updatePreview();
+
+                let dev = config.devices.find(d => d.id === selectedDeviceId) || config.devices[0];
+                const parts = getDeviceParts(dev, selectedVersion);
+                const baseUrl = config.download_base_url || './firmware';
+
+                stagedFiles = [];
+                log(`Downloading binary firmware (${parts.length} file${parts.length > 1 ? 's' : ''})...`);
+
+                for (const part of parts) {
+                    const url = `${baseUrl}/${selectedVersion}/${part.filename}`;
+                    log(`Fetching ${part.filename}...`);
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error(`HTTP Error ${resp.status} fetching ${part.filename}`);
+                    const buf = await resp.arrayBuffer();
+                    stagedFiles.push({
+                        data: new Uint8Array(buf),
+                        address: part.offset,
+                        filename: part.filename,
+                        size: buf.byteLength
+                    });
+                }
+
+                const totalKb = (stagedFiles.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(1);
+                if (stagedFiles.length === 1) {
+                    log(`Firmware binary staged (${totalKb} KB).`, 'text-emerald-400');
+                } else {
+                    log(`Staged ${stagedFiles.length} binary files (${totalKb} KB total):`, 'text-emerald-400');
+                    stagedFiles.forEach(f => {
+                        log(`  • ${f.filename} @ 0x${f.address.toString(16).toUpperCase()} (${(f.size / 1024).toFixed(1)} KB)`, 'text-emerald-400');
+                    });
+                }
+
+                connectBtn.classList.add('hidden');
+                flashBtn.classList.remove('hidden');
+                flashBtn.disabled = false;
+                eraseOnlyBtn.disabled = false;
+
+            } catch (err) {
+                log(`Error: ${err.message}`, 'text-rose-400');
+            }
+        });
+
+        eraseOnlyBtn.addEventListener('click', async () => {
+            if (!esploader) return;
+            if (!confirm("Are you sure you want to completely erase the ESP32 flash memory?")) return;
+            try {
+                eraseOnlyBtn.disabled = true;
+                flashBtn.disabled = true;
+                if (progressStatusText) progressStatusText.textContent = "Erasing flash memory...";
+                progressWrapper.classList.remove('hidden');
+                progressBar.style.width = '50%';
+                progressPercent.textContent = '...';
+
+                log('Erasing entire chip flash memory (this may take 10-30 seconds)...', 'text-amber-300');
+                await esploader.eraseFlash();
+                
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                log('★ FLASH ERASED SUCCESSFULLY!', 'text-emerald-400 font-bold');
+            } catch (err) {
+                log(`Erase error: ${err.message}`, 'text-rose-400');
+            } finally {
+                eraseOnlyBtn.disabled = false;
+                flashBtn.disabled = false;
+            }
+        });
+
+        flashBtn.addEventListener('click', async () => {
+            if (!stagedFiles || stagedFiles.length === 0 || !esploader) return;
+            const shouldErase = eraseFlashCheckbox.checked;
+            try {
+                flashBtn.disabled = true;
+                eraseOnlyBtn.disabled = true;
+                progressWrapper.classList.remove('hidden');
+
+                if (shouldErase) {
+                    if (progressStatusText) progressStatusText.textContent = "Erasing flash memory...";
+                    log('Erasing full chip flash memory before writing...', 'text-amber-300');
+                } else {
+                    if (progressStatusText) progressStatusText.textContent = "Writing flash memory...";
+                }
+
+                log('Flashing firmware...', 'text-amber-300');
+
+                await esploader.writeFlash({
+                    fileArray: stagedFiles.map(f => ({ data: f.data, address: f.address })),
+                    flashSize: 'keep', flashMode: 'keep', flashFreq: 'keep', eraseAll: shouldErase, compress: true,
+                    reportProgress: (idx, written, total) => {
+                        if (progressStatusText) progressStatusText.textContent = "Writing flash memory...";
+                        const pct = Math.round((written / total) * 100);
+                        progressBar.style.width = `${pct}%`;
+                        progressPercent.textContent = `${pct}%`;
+                    }
+                });
+
+                log('★ FLASH SUCCESSFUL!', 'text-emerald-400 font-bold');
+                log('Resetting board...', 'text-amber-300');
+
+                try {
+                    await esploader.after('hard_reset');
+                } catch (e) {
+                    try {
+                        await transport.setDTR(false);
+                        await transport.setRTS(true);
+                        await new Promise(r => setTimeout(r, 100));
+                        await transport.setRTS(false);
+                    } catch (e2) {}
+                }
+
+                try {
+                    await transport.disconnect();
+                } catch(e) {}
+
+                log('Board reset complete. Connect to Wi-Fi "ESP32 Virtual HID" (pass: password123) & visit http://192.168.4.1', 'text-[#9ed7ff]');
+
+            } catch (err) {
+                log(`Flash error: ${err.message}`, 'text-rose-400');
+                flashBtn.disabled = false;
+                eraseOnlyBtn.disabled = false;
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadConfig);
+    </script>
+</body>
+</html>

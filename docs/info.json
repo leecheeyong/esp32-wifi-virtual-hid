@@ -1,0 +1,58 @@
+{
+  "name": "ESP32 WiFi Virtual HID",
+  "download_base_url": "./firmware",
+  "latest_version": "v1.0.0",
+  "versions": [
+    "v1.0.0"
+  ],
+  "devices": [
+    {
+      "id": "esp32-s3",
+      "name": "ESP32-S3",
+      "chip": "ESP32-S3",
+      "offset": "0x0000",
+      "filename_template": "esp32-s3-virtual-hid-{version}.bin",
+      "parts": [
+        {
+          "offset": "0x0000",
+          "filename_template": "esp32-s3-virtual-hid-{version}.bin"
+        }
+      ],
+      "description": "ESP32-S3 Dual-Core SoC (N16R8, SuperMini, DevKit) with direct USB HID."
+    },
+    {
+      "id": "esp32-s2-mini",
+      "name": "ESP32-S2 Mini",
+      "chip": "ESP32-S2",
+      "parts": [
+        {
+          "offset": "0x1000",
+          "filename_template": "esp32-s2-mini-virtual-hid-{version}.bootloader.bin"
+        },
+        {
+          "offset": "0x8000",
+          "filename_template": "esp32-s2-mini-virtual-hid-{version}.partitions.bin"
+        },
+        {
+          "offset": "0x10000",
+          "filename_template": "esp32-s2-mini-virtual-hid-{version}.firmware.bin"
+        }
+      ],
+      "description": "Lolin/Wemos ESP32-S2 Mini board with native USB C port."
+    },
+    {
+      "id": "esp32-s2",
+      "name": "ESP32-S2 Standard",
+      "chip": "ESP32-S2",
+      "offset": "0x0000",
+      "filename_template": "esp32-s2-virtual-hid-{version}.bin",
+      "parts": [
+        {
+          "offset": "0x0000",
+          "filename_template": "esp32-s2-virtual-hid-{version}.bin"
+        }
+      ],
+      "description": "Generic ESP32-S2 development kit with USB OTG interface."
+    }
+  ]
+}

@@ -148,6 +148,8 @@ void setup() {
     ssid = preferences.getString("wifi_ssid", ssid);
     password = preferences.getString("wifi_pass", password);
     
+    WiFi.persistent(false);
+    WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid.c_str(), password.c_str());
     
     // STARTUP SCRIPT EXECUTION

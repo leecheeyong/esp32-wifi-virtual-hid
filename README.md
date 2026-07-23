@@ -1,3 +1,5 @@
+![](./favicon.png)
+
 # ESP32 WiFi Virtual Human Interface Device
 Turn an ESP32 into a wireless plug and play keyboard & mouse
 
@@ -12,12 +14,29 @@ Turn an ESP32 into a wireless plug and play keyboard & mouse
 - **Web UI:** A minimalist interface that scales perfectly across portrait and landscape orientations on mobile/tablets.
 
 ## Setup and Installation
+
+### Option 1: ESP Web Tools (Recommended)
+1. Open the **[Web Flasher](https://leecheeyong.github.io/esp32-wifi-virtual-hid/flasher)** (or `docs/flasher.html`) in Google Chrome or Microsoft Edge.
+2. Hold down the **BOOT** button on your ESP32 board and plug in the USB cable.
+3. Click **Connect Device**, choose your COM port, and install.
+4. Press **RESET** (or unplug/replug USB) to start the board.
+
+### Option 2: esptool.py (Command Line Flashing)
+For **ESP32-S2 Mini**, flash the 3 binaries at their respective offsets:
+```bash
+esptool.py -p <COM_PORT> -b 460800 --chip esp32s2 write_flash \
+  0x1000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.bootloader.bin \
+  0x8000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.partitions.bin \
+  0x10000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.firmware.bin
+```
+
+### Option 3: Arduino IDE (From Source)
 1. **Configure Arduino IDE:**
-    - Board: Select your ESP32-S2 board model.
-    - USB CDC On Boot: Enabled (if applicable to your board variant).
-    - Dependencies: No external libraries required. 
+    - Board: Select your ESP32-S2 or ESP32-S3 board model.
+    - USB CDC On Boot: Enabled
+    - USB Mode: Hardware CDC and JTAG (or Native USB)
 2. **Upload:**
-    - Connect the board, select the correct COM port, and upload the sketch.
+    - Connect the board, select the COM port, and upload [sketch.ino](sketch.ino) & [html.h](html.h)
 
 ## Usage
 1. Plug the ESP32 into the computer you want to control.
