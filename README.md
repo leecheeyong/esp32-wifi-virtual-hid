@@ -1,6 +1,6 @@
 <img src="./docs/favicon.png" width="200">
 
-# ESP32 WiFi Virtual Human Interface Device
+# [ESP32 WiFi Virtual Human Interface Device](https://leecheeyong.github.io/esp32-wifi-virtual-hid)
 Turn an ESP32 into a wireless plug and play keyboard & mouse
 
 ## Tested Devices
