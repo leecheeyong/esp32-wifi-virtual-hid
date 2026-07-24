@@ -34,7 +34,7 @@ Turn your affordable ESP32-S2 or ESP32-S3 into a driverless, plug-and-play USB k
 For **ESP32-S2 Mini**, flash the 3 binaries at their respective offsets:
 
 ```bash
-esptool.py -p <COM_PORT> -b 460800 --chip esp32s2 write_flash \
+esptool.py -p <COM_PORT> --chip esp32s2 write_flash \
   0x1000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.bootloader.bin \
   0x8000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.partitions.bin \
   0x10000 docs/firmware/{version}/esp32-s2-mini-virtual-hid-{version}.firmware.bin
