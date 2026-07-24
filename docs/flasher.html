@@ -24,47 +24,21 @@
       content="ESP32, ESP32-S2, ESP32-S3, WiFi, Virtual HID, Web Flasher, WebSerial API, Firmware Flashing, USB HID Controller"
     />
     <meta property="og:image" content="./favicon.png" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              theme: {
-                DEFAULT: "#9ed7ff",
-                hover: "#b5e1ff",
-                muted: "rgba(158, 215, 255, 0.15)",
-                border: "rgba(158, 215, 255, 0.25)",
-              },
-              dark: {
-                bg: "#080a11",
-                card: "#111420",
-                input: "#0b0d17",
-                border: "#1d2235",
-              },
-            },
-            fontFamily: {
-              sans: [
-                "Inter",
-                "-apple-system",
-                "BlinkMacSystemFont",
-                "Segoe UI",
-                "Roboto",
-                "sans-serif",
-              ],
-              mono: [
-                "JetBrains Mono",
-                "ui-monospace",
-                "SFMono-Regular",
-                "Consolas",
-                "monospace",
-              ],
-            },
-          },
-        },
-      };
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme {
+        --color-theme: #9ed7ff;
+        --color-theme-hover: #b5e1ff;
+        --color-theme-muted: rgba(158, 215, 255, 0.15);
+        --color-theme-border: rgba(158, 215, 255, 0.25);
+        --color-dark-bg: #080a11;
+        --color-dark-card: #111420;
+        --color-dark-input: #0b0d17;
+        --color-dark-border: #1d2235;
+        --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
